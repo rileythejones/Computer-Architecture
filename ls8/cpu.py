@@ -2,16 +2,29 @@
 
 import sys
 
+HLT = 0b00000001
+LDI = 0b10000010
+PRN = 0b01000111
+MUL = 0b10100010
+
+
 class CPU:
     """Main CPU class."""
 
     def __init__(self):
         """Construct a new CPU."""
-        pass
+        self.ram = [0b00000000] * 256
+        self.reg = [0b00000000] * 8
+        self.pc = 0
+
+    def ram_read(self, address):
+        return self.ram[address]
+
+    def ram_write(self, address, value):
+        self.ram[address] = value
 
     def load(self):
         """Load a program into memory."""
-
         address = 0
 
         # For now, we've just hardcoded a program:
@@ -30,13 +43,13 @@ class CPU:
             self.ram[address] = instruction
             address += 1
 
-
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+
+
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -61,5 +74,27 @@ class CPU:
         print()
 
     def run(self):
-        """Run the CPU."""
-        pass
+
+        ir = self.pc
+        halt = False 
+
+        while halt == False:
+            
+            opcode = self.ram_read(ir)
+
+            operand_A, operand_B = self.ram_read(ir + 1), self.ram_read(ir + 2)
+            
+            if opcode == HLT:
+                halt = True 
+                print("Halt")
+                return  
+
+            if opcode == LDI:
+                self.reg[operand_A] = operand_B
+                ir += 3 
+            
+            if opcode == PRN:
+                val = self.reg[operand_A]
+                print(val)
+                ir += 2
+
