@@ -2,6 +2,10 @@
 
 import sys
 
+
+PUSH = 0b01000101 
+POP = 0b01000110
+
 HLT = 0b00000001
 LDI = 0b10000010
 PRN = 0b01000111
@@ -16,6 +20,10 @@ class CPU:
         self.ram = [0b00000000] * 256
         self.reg = [0b00000000] * 8
         self.pc = 0
+        
+        self.sp = 7 
+        self.reg[self.sp] = 0xF4
+
 
     def ram_read(self, address):
         return self.ram[address]
@@ -113,3 +121,17 @@ class CPU:
             if opcode == MUL:
                 self.alu('MUL', operand_A, operand_B)
                 ir += 3
+                
+            if opcode == PUSH:
+                self.reg[self.sp] -= 1   
+                val = self.reg[self.ram[ir + 1]]  
+                address = self.reg[self.sp]
+                self.ram[address] = val   
+                ir += 2
+
+            if opcode == POP:
+                val = self.ram[self.reg[self.sp]]
+                reg = self.ram[ir + 1]
+                self.reg[reg] = val
+                self.reg[self.sp] += 1   
+                ir += 2
