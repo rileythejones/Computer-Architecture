@@ -23,25 +23,36 @@ class CPU:
     def ram_write(self, address, value):
         self.ram[address] = value
 
-    def load(self):
+    def load(self, load_file=None):
         """Load a program into memory."""
-        address = 0
+        
+        address = 0 
+        
+        if load_file is not None: 
+            print("loading file")
+            with open(load_file) as f:
+                for line in f:
+                    line = line.split("#")[0].strip()
+                    if line == '':
+                        continue
+                    self.ram[address] = int(line,2)
+                    address += 1
+                    
+        else:
+            print("Run default")
+            program = [
+                # From print8.ls8
+                0b10000010, # LDI R0,8
+                0b00000000,
+                0b00001000,
+                0b01000111, # PRN R0
+                0b00000000,
+                0b00000001, # HLT
+            ]
 
-        # For now, we've just hardcoded a program:
-
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
-
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+            for instruction in program:
+                self.ram[address] = instruction
+                address += 1
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
@@ -49,6 +60,8 @@ class CPU:
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
 
+        if op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]      
 
         else:
             raise Exception("Unsupported ALU operation")
@@ -74,14 +87,14 @@ class CPU:
         print()
 
     def run(self):
-
+        
         ir = self.pc
         halt = False 
 
         while halt == False:
             
             opcode = self.ram_read(ir)
-
+            
             operand_A, operand_B = self.ram_read(ir + 1), self.ram_read(ir + 2)
             
             if opcode == HLT:
@@ -94,7 +107,9 @@ class CPU:
                 ir += 3 
             
             if opcode == PRN:
-                val = self.reg[operand_A]
-                print(val)
+                print(self.reg[operand_A])
                 ir += 2
 
+            if opcode == MUL:
+                self.alu('MUL', operand_A, operand_B)
+                ir += 3
